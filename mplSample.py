@@ -12,6 +12,7 @@ import yfinance as yf
 
 df_amd = yf.download('002594.sz', start='2020-01-02', end='2020-12-01', progress=False)
 print(df_amd)
+print(df_amd.columns)
 
 df = df_amd[['Adj Close']] #这里要用两个[]，否则是一个series而不是df
 df['s_r'] = df/df.shift(1)-1 #计算简单收益率
@@ -43,8 +44,9 @@ def on_pick(event):
     
     
 fig, ax = plt.subplots(figsize=(12,8))
-df_high= df_amd[['High']]
-ax.plot(df_high.index,df_high.High,color='black',label='High')
+df_high= df_amd[['Open','High']]
+ax.plot(df_high.index,df_high.Open,color='black',label='Open')
+ax.plot(df_high.index,df_high.High,color='blue',label='High')
 # ax.plot(df_abnorm.index, df_abnorm.s_r, color='blue', label='Normal')
 # ax.scatter(abnorm.index, abnorm.values, picker=5, color='red', label='Abnormal')
 ax.set_title("AMD stock ananlysis")
