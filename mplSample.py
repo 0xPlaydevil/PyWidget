@@ -10,7 +10,7 @@ import numpy as np
 import yfinance as yf
 # %matplotlib
 
-df_amd = yf.download('AMD', start='2019-01-02', end='2020-01-01', progress=False)
+df_amd = yf.download('002594.sz', start='2020-01-02', end='2020-12-01', progress=False)
 print(df_amd)
 
 df = df_amd[['Adj Close']] #这里要用两个[]，否则是一个series而不是df
@@ -43,8 +43,10 @@ def on_pick(event):
     
     
 fig, ax = plt.subplots(figsize=(12,8))
-ax.plot(df_abnorm.index, df_abnorm.s_r, color='blue', label='Normal')
-ax.scatter(abnorm.index, abnorm.values, picker=5, color='red', label='Abnormal')
+df_high= df_amd[['High']]
+ax.plot(df_high.index,df_high.High,color='black',label='High')
+# ax.plot(df_abnorm.index, df_abnorm.s_r, color='blue', label='Normal')
+# ax.scatter(abnorm.index, abnorm.values, picker=5, color='red', label='Abnormal')
 ax.set_title("AMD stock ananlysis")
 ax.legend(loc='upper left')
 fig.canvas.mpl_connect('pick_event', on_pick)
