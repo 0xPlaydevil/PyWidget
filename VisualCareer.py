@@ -14,13 +14,20 @@ rnds= []
 with open("career_data.txt") as fp:
     for line in fp.readlines():
         # --------从这里开始---------
+       line[8:] 
+       cd=line[8:]
+       if cd!="":
+           rndss=cd
+           rnds=[rndss]+[cd]
+       print (rnds)
         
+    
         # --------到这里结束---------
-        print(line)
+
     
 
-for i in range(16):
-    rnds.append(random.randrange(10,50))
+#for i in range(16):
+# rnds.append(random.randrange(10,50))
 print(rnds)
 
 df= pd.DataFrame(rnds,columns=["val"], index=range(16))
