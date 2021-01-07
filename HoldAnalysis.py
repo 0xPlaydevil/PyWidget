@@ -20,9 +20,11 @@ class DealRecords:
         df['证券代码']= df['证券代码'].str.strip('" =')
         # print(df['证券代码'])
         # 设定列类型
-        df['成交数量']= df['成交数量'].astype(int)
-        df['成交均价']= df['成交均价'].astype(float)
-        df['成交金额']= df['成交金额'].astype(float)
+        # df['成交数量']= df['成交数量'].astype(int)
+        # df['成交均价']= df['成交均价'].astype(float)
+        # df['成交金额']= df['成交金额'].astype(float)
+        # df.loc[:,'成交数量':'股份余额'].apply(pd.to_numeric,inplace=True)
+        df.loc[:,'成交数量':'股份余额']=df.loc[:,'成交数量':'股份余额'].apply(pd.to_numeric)
         df.loc[:,'成交日期']= pd.to_datetime(df.loc[:,'成交日期'],format='%Y-%m-%d',errors='coerce')
         # print(df.dtypes)
         # 取子集
