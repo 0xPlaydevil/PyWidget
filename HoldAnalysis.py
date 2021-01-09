@@ -1,5 +1,9 @@
 import pandas as pd
 import PySimpleGUI as SG
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 
 class DealRecords:
     def __init__(self,filename='deal.csv'):
@@ -77,7 +81,28 @@ class DealRecords:
             df['股份余额修正']= (df['成交数量']*df['direc']).cumsum()
             df['profit']= df['股份余额修正']*df['成交均价']-df['curcost']
             return df
-            
+
+class DealVisual:
+    dealRecs=DealRecords()
+    fig=plt.figure(figsize=(12,8))
+    ax= plt.subplot()
+    @classmethod
+    def fig_profit(cls,corp):
+        df= cls.dealRecs.take(corp,True)
+        cls.ax.cla()
+        cls.ax.plot(df.index,df['profit'],color='black',label='lb profit')
+        df_in= df.loc[df['direc']==1]
+        df_out= df.loc[df['direc']==-1]
+        cls.ax.scatter(df_in.index,df_in['profit'],color='red')
+        cls.ax.scatter(df_out.index,df_out['profit'],color='blue')
+        cls.ax.legend()
+        return cls.fig
+
+def draw_figure(canvas,figure):
+    figcv_agg= FigureCanvasTkAgg(figure,canvas)
+    figcv_agg.draw()
+    figcv_agg.get_tk_widget().pack(side='top',fill='both',expand=1)
+    return figcv_agg
 
 def main():
     dealRecs= DealRecords()
@@ -86,13 +111,16 @@ def main():
     layout= [[SG.Combo(corps,corps[0],(10,10),readonly=True,enable_events=True,k='-selcorp-'),
               SG.Spin(list(range(len(corps))),size=(3,1),enable_events=True,k='-selcorpseq-'),
               SG.Combo(list(rankmap.keys()),list(rankmap.keys())[0],(6,3),readonly=True,enable_events=True,k='-cmbRank-')],
+             [SG.Canvas(k='-cvFig-')],
              [SG.Text('测试3')]]
-    window= SG.Window('历史持仓',layout,size=(800,600))
+    window= SG.Window('历史持仓',layout,finalize=True,size=(800,600))
     sel=window['-selcorp-']
     isel=window['-selcorpseq-']
     
+    figagg=draw_figure(window['-cvFig-'].TKCanvas,DealVisual.fig_profit(corps[0]))
+    
     while True:
-        event,values= window.Read(1000)
+        event,values= window.Read(100)
         if event==SG.WIN_CLOSED:
             break
         if event=='-selcorpseq-':
@@ -101,6 +129,10 @@ def main():
             sel.update(values=dealRecs.corps(rankmap[values['-cmbRank-']]))
         if event in ['-selcorp-','-cmbRank-']:
             isel.update(sel.Values.index(values['-selcorp-']))
+        if event=='-selcorp-' or event==SG.TIMEOUT_KEY:
+            DealVisual.fig_profit(values['-selcorp-'])
+            figagg.draw()
+
 
 pd.set_option('display.float_format',lambda x:'%.2f' % x)
 
