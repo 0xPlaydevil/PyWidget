@@ -3,7 +3,6 @@ import PySimpleGUI as SG
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('TkAgg')
 
 class DealRecords:
     def __init__(self,filename='deal.csv'):
@@ -87,7 +86,7 @@ class DealVisual:
     fig=plt.figure(figsize=(12,8))
     ax= plt.subplot()
     @classmethod
-    def fig_profit(cls,corp):
+    def draw_profit(cls,corp):
         df= cls.dealRecs.take(corp,True)
         cls.ax.cla()
         cls.ax.plot(df.index,df['profit'],color='black',label='lb profit')
@@ -96,15 +95,15 @@ class DealVisual:
         cls.ax.scatter(df_in.index,df_in['profit'],color='red')
         cls.ax.scatter(df_out.index,df_out['profit'],color='blue')
         cls.ax.legend()
-        return cls.fig
 
-def draw_figure(canvas,figure):
+def figureagg(canvas,figure):
     figcv_agg= FigureCanvasTkAgg(figure,canvas)
     figcv_agg.draw()
     figcv_agg.get_tk_widget().pack(side='top',fill='both',expand=1)
     return figcv_agg
 
 def main():
+    matplotlib.use('TkAgg')
     dealRecs= DealRecords()
     rankmap= {'不排序':0, '升序':1, '降序':2}
     corps=dealRecs.corps()
@@ -117,7 +116,7 @@ def main():
     sel=window['-selcorp-']
     isel=window['-selcorpseq-']
     
-    figagg=draw_figure(window['-cvFig-'].TKCanvas,DealVisual.fig_profit(corps[0]))
+    figagg=figureagg(window['-cvFig-'].TKCanvas,DealVisual.fig)
     
     while True:
         event,values= window.Read(100)
@@ -130,9 +129,8 @@ def main():
         if event in ['-selcorp-','-cmbRank-']:
             isel.update(sel.Values.index(values['-selcorp-']))
         if event=='-selcorp-' or event==SG.TIMEOUT_KEY:
-            DealVisual.fig_profit(values['-selcorp-'])
+            DealVisual.draw_profit(values['-selcorp-'])
             figagg.draw()
-
 
 pd.set_option('display.float_format',lambda x:'%.2f' % x)
 
