@@ -3,6 +3,7 @@ import PySimpleGUI as SG
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import matplotlib
+import time
 
 class DealRecords:
     def __init__(self,filename='deal.csv'):
@@ -29,7 +30,6 @@ class DealRecords:
         # df.loc[:,'成交数量':'股份余额'].apply(pd.to_numeric,inplace=True)
         df.loc[:,'成交数量':'股份余额']=df.loc[:,'成交数量':'股份余额'].apply(pd.to_numeric)
         df.loc[:,'成交日期']= pd.to_datetime(df.loc[:,'成交日期'],format='%Y-%m-%d',errors='coerce')
-        print(df['成交日期'].dtype)
         df['成交均价']= df['成交均价'].astype(float)
         # print(df.dtypes)
         # 取子集
@@ -104,21 +104,22 @@ def figureagg(canvas,figure):
     return figcv_agg
 
 def resetDateRange(cldmin,cldmax):
-    # cldmin.update('2020-12-3')
-    # cldmax.update('2020-12-31')
     cldmin.calendar_default_date_M_D_Y= (12,3,2020)
     cldmax.calendar_default_date_M_D_Y=(12,31,2020)
     cldmin.calendar_selection='2020-12-3'
     cldmax.calendar_selection='2020-12-31'
+    cldmin.update('2020-12-3')
+    cldmax.update('2020-12-31')
 
 def main():
     matplotlib.use('TkAgg')
-    dealRecs= DealRecords()
+    dealRecs= DealVisual.dealRecs
+    # 准备layout
     rankmap= {'不排序':0, '升序':1, '降序':2}
     corps=dealRecs.corps()
-    layout= [[SG.CalendarButton('',(SG.ThisRow,0),True,(12,3,2020),k='-cldmin-',size=(10,1),format='%Y-%m-%d'),
+    layout= [[SG.CalendarButton('',(SG.ThisRow,0),True,(12,3,2020),k='-cldmin-',size=(10,1),format='%Y-%m-%d',enable_events=True),
               SG.Text('-'),
-              SG.CalendarButton('','-cldmax-',True,(12,31,2020),k='-cldmax-',size=(10,1),format='%Y-%m-%d'),
+              SG.CalendarButton('','-cldmax-',True,(12,31,2020),k='-cldmax-',size=(10,1),format='%Y-%m-%d',enable_events=True),
               SG.Button('重置日期',k='-btnredate-'),
               SG.VerticalSeparator(),
               SG.Combo(corps,corps[0],(10,10),readonly=True,enable_events=True,k='-selcorp-'),
@@ -126,18 +127,17 @@ def main():
               SG.Combo(list(rankmap.keys()),list(rankmap.keys())[0],(6,3),readonly=True,enable_events=True,k='-cmbRank-')],
              [SG.Canvas(k='-cvFig-')],
              [SG.ProgressBar(100,'horizontal',(20,5),k='-pbanim-')]]
+    # 准备窗口
     window= SG.Window('历史持仓',layout,finalize=True,size=(800,600))
     sel=window['-selcorp-']
     isel=window['-selcorpseq-']
     cldmin=window['-cldmin-']
     cldmax=window['-cldmax-']
-    dateselecting=True
     pbanimval=0
-    
     figagg=figureagg(window['-cvFig-'].TKCanvas,DealVisual.fig)
     resetDateRange(cldmin,cldmax)
     
-    
+    # 启动主消息循环
     while True:
         event,values= window.Read(100)
         if event==SG.WIN_CLOSED:
@@ -151,18 +151,16 @@ def main():
         if event=='-selcorp-' or event==SG.TIMEOUT_KEY:
             DealVisual.draw_profit(values['-selcorp-'])
             figagg.draw()
-        # 无法捕获CalendarButton的事件！！！！！！
         if event in ['-cldmin-','-cldmax-']:
-            print('cld btn')
-            dateselecting=True
+            cldmin.update(cldmin.calendar_selection)
+            cldmax.update(cldmax.calendar_selection)
+            tm=time.strptime(cldmin.calendar_selection,'%Y-%m-%d')
+            cldmin.calendar_default_date_M_D_Y=(tm.tm_mon,tm.tm_mday,tm.tm_year)
+            tm=time.strptime(cldmax.calendar_selection,'%Y-%m-%d')
+            cldmax.calendar_default_date_M_D_Y=(tm.tm_mon,tm.tm_mday,tm.tm_year)
         if event== SG.TIMEOUT_KEY:
             pbanimval=(pbanimval+1)%100
             window['-pbanim-'].update(pbanimval)
-            print('update cld',dateselecting)
-            if dateselecting:
-                cldmin.update(cldmin.calendar_selection)
-                cldmax.update(cldmax.calendar_selection)
-                dateselecting=False
 
 pd.set_option('display.float_format',lambda x:'%.2f' % x)
 
