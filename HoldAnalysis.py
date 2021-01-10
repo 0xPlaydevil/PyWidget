@@ -29,6 +29,7 @@ class DealRecords:
         # df.loc[:,'成交数量':'股份余额'].apply(pd.to_numeric,inplace=True)
         df.loc[:,'成交数量':'股份余额']=df.loc[:,'成交数量':'股份余额'].apply(pd.to_numeric)
         df.loc[:,'成交日期']= pd.to_datetime(df.loc[:,'成交日期'],format='%Y-%m-%d',errors='coerce')
+        print(df['成交日期'].dtype)
         df['成交均价']= df['成交均价'].astype(float)
         # print(df.dtypes)
         # 取子集
@@ -107,7 +108,10 @@ def main():
     dealRecs= DealRecords()
     rankmap= {'不排序':0, '升序':1, '降序':2}
     corps=dealRecs.corps()
-    layout= [[SG.Combo(corps,corps[0],(10,10),readonly=True,enable_events=True,k='-selcorp-'),
+    layout= [[SG.CalendarButton('',(SG.ThisRow,0),True,(12,3,2020),k='-cldmin-',size=(10,1),format='%Y-%m-%d'),
+              SG.Text('-'),
+              SG.CalendarButton('','-cldmax-',True,(12,31,2020),k='-cldmax-',size=(10,1),format='%Y-%m-%d'),
+              SG.Combo(corps,corps[0],(10,10),readonly=True,enable_events=True,k='-selcorp-'),
               SG.Spin(list(range(len(corps))),size=(3,1),enable_events=True,k='-selcorpseq-'),
               SG.Combo(list(rankmap.keys()),list(rankmap.keys())[0],(6,3),readonly=True,enable_events=True,k='-cmbRank-')],
              [SG.Canvas(k='-cvFig-')],
@@ -115,6 +119,8 @@ def main():
     window= SG.Window('历史持仓',layout,finalize=True,size=(800,600))
     sel=window['-selcorp-']
     isel=window['-selcorpseq-']
+    cldmin=window['-cldmin-']
+    cldmax=window['-cldmax-']
     
     figagg=figureagg(window['-cvFig-'].TKCanvas,DealVisual.fig)
     
@@ -131,6 +137,9 @@ def main():
         if event=='-selcorp-' or event==SG.TIMEOUT_KEY:
             DealVisual.draw_profit(values['-selcorp-'])
             figagg.draw()
+        if event== SG.TIMEOUT_KEY:
+            cldmin.update(cldmin.calendar_selection)
+            cldmax.update(cldmax.calendar_selection)
 
 pd.set_option('display.float_format',lambda x:'%.2f' % x)
 
